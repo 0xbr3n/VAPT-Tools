@@ -43,11 +43,13 @@ python jwt_exploit.py
 Interactive prompts guide you through token manipulation and exploitation scenarios.
 
 📸 Screenshots
-Below are placeholders where you can insert screenshots of tool execution and sample outputs:
-- Host Header Injection Tester Output
+Below are placeholders where you can insert screenshots of tool execution and sample outputs
+
+**Host Header Injection Tester Output**
 <img width="1746" height="1352" alt="image" src="https://github.com/user-attachments/assets/b891a03e-455d-4150-8e4b-1c12c05846e6" />
 
-- JWT Exploitation Utility Output
+
+**JWT Exploitation Utility Output**
 <img width="2736" height="921" alt="image" src="https://github.com/user-attachments/assets/0a093a08-8655-4f33-a37f-b27fee030188" />
 
 ⚠️ Note
