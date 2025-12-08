@@ -13,6 +13,8 @@ python3 main.py
 ```
 
 **📸 Main Menu**
+
+```bash
 =========================================
         Web VAPT Tools Main Menu
 =========================================
@@ -24,7 +26,7 @@ python3 main.py
 [0] Exit
 
 Select an option: _
-
+```
 
 You will be presented with this interactive menu to choose which module to run.
 Results are printed to the terminal or saved in their respective report files (e.g., host_inject_report.json, ssl_cipher_report.json).
