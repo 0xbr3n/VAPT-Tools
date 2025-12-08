@@ -4,7 +4,34 @@ VAPT Tools is a collection of automation scripts for security testing across Web
 # 🌐 Web VAPT Tools
 
 The **Web VAPT** folder contains automation scripts focused on web application penetration testing.  
-Currently included:
+
+
+## 🚀 Main Workflow
+Run the main entry point to access all tools:
+```bash
+python3 main.py
+```
+
+**📸 Main Menu**
+=========================================
+        Web VAPT Tools Main Menu
+=========================================
+[1] Host Header Injection Tester
+[2] JWT Exploitation Utilities
+[3] Insecure Headers Enumeration
+[4] SSL/TLS Cipher Enumeration
+[5] Request Smuggling Exploitation
+[0] Exit
+
+Select an option: _
+
+
+You will be presented with this interactive menu to choose which module to run.
+Results are printed to the terminal or saved in their respective report files (e.g., host_inject_report.json, ssl_cipher_report.json).
+
+
+
+**🔧 Tools Include**
 
 ---
 
