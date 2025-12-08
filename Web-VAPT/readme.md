@@ -177,7 +177,7 @@ Features
 
 **Example Individual Script Usage:**
 ```bash
-python3 ssl_ciphers.py <host> <port>
+python3 ssl_ciphers.py
 ```
 **📸 Screenshot Usage image**
 
@@ -209,7 +209,7 @@ Overview smuggling.py is the fifth tool in the Web VAPT Tools suite. It automate
 
 **Example Individual Script Usage:**
 ```bash
-python3 smuggling.py <host> <port> [--proxy 127.0.0.1]
+python3 smuggling.py
 ```
 
 **📸 Screenshot Usage image**
