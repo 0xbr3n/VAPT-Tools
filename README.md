@@ -33,7 +33,7 @@ Results are printed to the terminal or saved in their respective report files (e
 
 
 
-**🔧 Tools Include**
+# 🔧 Tools Included
 
 ---
 
