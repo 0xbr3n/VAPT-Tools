@@ -24,7 +24,7 @@ Currently included:
   - Downgrade HTTPS → HTTP and force HTTP/1.1 options
 - Outputs grouped results (**Successful**, **Interesting**, **Failed**) and saves a JSON report.
 
-**Usage:**
+**Example Individual Script Usage:**
 ```bash
 python host.py
 ```
@@ -39,7 +39,9 @@ Follow the prompts to configure your test. Results are printed to the terminal a
 - Automates JSON Web Token exploitation techniques.
 - Supports JKU/JWKS hosting, signature bypasses, and cryptographic attack chains.
 - Designed for extensibility and integration with GitHub Pages for callback endpoints.
-**Usage:**
+
+
+**Example Individual Script Usage:**
 ```bash
 python jwt_exploit.py
 ```
@@ -86,9 +88,9 @@ headers.py is the third tool in the Web VAPT Tools suite. It scans target URLs f
 ✅ User can choose:
 - Plain URLs only (easy copy/paste into Excel reports)
 - URLs with inline details (brackets showing what was misconfigured)
+
   
-**Usage**
-Run the tool interactively:
+**Example Individual Script Usage:**
 ```bash
 python3 headers.py
 ```
@@ -145,7 +147,9 @@ Features
 - Weak ciphers (deprecated/insecure)
 - Unsupported ciphers (not negotiated by server/OpenSSL build)
 ✅ Provides summary counts for quick visibility.
-Usage
+
+
+**Example Individual Script Usage:**
 ```bash
 python3 ssl_ciphers.py <host> <port>
 ```
@@ -176,7 +180,8 @@ Overview smuggling.py is the fifth tool in the Web VAPT Tools suite. It automate
 - Interesting anomalies
 - Failed attempts
 
-**Usage**
+
+**Example Individual Script Usage:**
 ```bash
 python3 smuggling.py <host> <port> [--proxy 127.0.0.1]
 ```
