@@ -52,7 +52,7 @@ Results are printed to the terminal or saved in their respective report files (e
 
 **Example Individual Script Usage:**
 ```bash
-python host.py
+python3 host.py
 ```
 
 **📸 Screenshot Usage**
@@ -69,7 +69,7 @@ Follow the prompts to configure your test. Results are printed to the terminal a
 
 **Example Individual Script Usage:**
 ```bash
-python jwt_exploit.py
+python3 jwt_exploit.py
 ```
 
 Interactive prompts guide you through token manipulation and exploitation scenarios.
