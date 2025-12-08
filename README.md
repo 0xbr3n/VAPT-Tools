@@ -129,6 +129,63 @@ Notes
 - Deduplication ensures parameterized URLs (e.g., ?id=1, ?id=2) are only tested once.
 - Designed for extensibility: new header checks can be added easily.
 
+
+## 4. SSL/TLS Cipher Enumeration
+Overview ssl_ciphers.py is the fourth tool in the Web VAPT Tools suite. It automates the enumeration of supported SSL/TLS cipher suites on a given host and port, highlighting weak or deprecated ciphers.
+Features
+✅ Attempts handshake with a comprehensive cipher list (TLS 1.3, TLS 1.2, legacy CBC/RC4/MD5/SHA1, PSK, SRP, GOST).
+✅ Flags weak ciphers including:
+- CBC mode (BEAST, POODLE, Lucky13 vulnerabilities)
+- RC4 stream cipher (deprecated due to bias attacks)
+- SHA1/MD5 hashing (collision-prone, broken)
+- NULL and EXPORT ciphers (insecure by design)
+✅ Deduplicates results so each cipher is reported once.
+✅ Outputs grouped results:
+- Strong ciphers (safe for use)
+- Weak ciphers (deprecated/insecure)
+- Unsupported ciphers (not negotiated by server/OpenSSL build)
+✅ Provides summary counts for quick visibility.
+Usage
+python3 ssl_ciphers.py <host> <port>
+
+
+**📸 Screenshot Usage image**
+<img width="702" height="586" alt="image" src="https://github.com/user-attachments/assets/fadc3249-45fc-4721-9a2a-d1d30f11c0d7" />
+
+Results are printed to the terminal as shown above.
+
+
+## 5. Request Smuggling Exploitation
+Overview smuggling.py is the fifth tool in the Web VAPT Tools suite. It automates crafting and sending of HTTP request smuggling payloads to test for front‑end/back‑end parsing discrepancies.
+
+**Features**
+✅ Supports multiple smuggling techniques:
+- Content-Length vs Transfer-Encoding mismatches
+- Duplicate headers (e.g., two Content-Length values)
+- Embedded/duplicated requests inside the body of another request
+✅ Raw socket implementation ensures exact byte‑level control (not sanitized by higher‑level libraries).
+✅ Optional proxy mode: route traffic through Burp Suite or another proxy for interception.
+- Configure with --proxy <ip> (default port 8080).
+✅ Interactive workflow:
+- Target host and port
+- Payload type (CL/TE, duplicate headers, embedded request)
+- Proxy option for interception
+✅ Outputs grouped results:
+- Successful smuggling attempts
+- Interesting anomalies
+- Failed attempts
+
+**Usage**
+```bash
+python3 smuggling.py <host> <port> [--proxy 127.0.0.1]
+```
+
+**📸 Screenshot Usage image**
+<img width="639" height="786" alt="image" src="https://github.com/user-attachments/assets/c889e11c-b3a3-4dcf-98af-a4687e4d900e" />
+
+Results are printed to the terminal and can be intercepted in Burp Suite for deeper analysis.
+
+
 ⚠️ Note
 These tools are intended only for authorized security testing and educational purposes.
 Do not use them against systems without explicit permission.
