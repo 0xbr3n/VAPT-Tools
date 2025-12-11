@@ -2,6 +2,27 @@
 
 The **Web VAPT** folder contains automation scripts focused on web application penetration testing.  
 
+## 📦 Installation
+
+Before running the Web VAPT Tools, make sure you install all required Python dependencies.
+
+1. **Clone the repository** (or download it):
+   ```bash
+   git clone https://github.com/yourusername/web-vapt-tools.git
+   cd web-vapt-tools
+   ```
+
+2. Create a virtual environment (recommended):
+```bash
+python3 -m venv venv
+source venv/bin/activate   # On Linux/Mac
+venv\Scripts\activate      # On Windows
+```
+
+3. Install dependencies from requirements.txt:
+````bash
+pip install -r requirements.txt
+````
 
 ## 🚀 Main Workflow
 Run the main entry point to access all tools:
