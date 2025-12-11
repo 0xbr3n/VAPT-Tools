@@ -41,6 +41,7 @@ python3 main.py
 [3] Insecure Headers Enumeration
 [4] SSL/TLS Cipher Enumeration
 [5] Request Smuggling Exploitation
+[6] Cross Origin Resource Sharing
 [0] Exit
 
 Select an option: _
@@ -238,6 +239,41 @@ python3 smuggling.py
 <img width="639" height="786" alt="image" src="https://github.com/user-attachments/assets/c889e11c-b3a3-4dcf-98af-a4687e4d900e" />
 
 Results are printed to the terminal and can be intercepted in Burp Suite for deeper analysis.
+
+
+## 6. Cross-Origin Resource Sharing (CORS) Exploitation
+Overview `cors_exploit.py` is the sixth tool in the Web VAPT Tools suite. It automates testing of CORS misconfigurations by sending crafted requests with different `Origin` values and analyzing server responses for insecure behavior.
+
+**Features**  
+✅ Supports multiple CORS test cases:
+- Malicious origin reflection (`Origin: https://evil.com`)
+- Null origin (`Origin: null`)
+- Subdomain tricks (`Origin: https://evil.target.com`)
+- Case sensitivity and trailing slash variations
+- HTTP vs HTTPS scheme mismatches
+- Multiple origins in a single header
+- Preflight `OPTIONS` requests with custom methods and headers  
+✅ Interactive workflow:
+- Target URL input
+- HTTP method selection (GET/POST/PUT)
+- Optional body data for POST/PUT requests
+- Authentication cookies and custom headers (loop input until blank line)  
+✅ Outputs grouped results:
+- Successful exploitation attempts (origin reflection, wildcard+credentials, critical misconfigs)
+- Interesting anomalies (wildcards, credential flags, specific ACAO values)
+- Failed attempts or safe configurations  
+✅ SSL verification toggle with warnings suppressed for Burp/self‑signed testing environments.
+
+**Example Individual Script Usage:**  
+```bash
+python3 cors.py
+````
+📸 Screenshot Usage
+
+<img width="1506" height="909" alt="image" src="https://github.com/user-attachments/assets/17a175a5-ad40-482f-a5e2-0cf9d985282f" />
+
+Results are printed to the terminal with a summary page grouping findings into Successful, Interesting, and Failed, making it easy to spot exploitable CORS misconfigurations
+
 
 
 ⚠️ Note
