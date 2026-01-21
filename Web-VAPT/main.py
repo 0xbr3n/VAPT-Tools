@@ -13,10 +13,11 @@ TOOLS = {
     "2": ("JWT Exploitation Tool", "jwt-attacker"),
     "3": ("Insecure Headers Enumeration", "headers"),
     "4": ("SSL Ciphers Enumeration", "ssl-enum"),
-    "5": ("Request Smuggling Exploitation", "smuggling")
+    "5": ("Request Smuggling Exploitation", "smuggling"),
+    "6": ("Cross Origin Resource Sharing", "cors")
     # Add future tools here:
-    # "6": ("Cross Site Request Forgery", "CSRF"),
-    # "7": ("Cross Site Scripting", "XSS"),
+    # "7": ("Cross Site Request Forgery", "CSRF"),
+    # "8": ("Cross Site Scripting", "XSS"),
 }
 
 BOX_WIDTH = 48  # width inside the box
