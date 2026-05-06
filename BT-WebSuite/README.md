@@ -1,9 +1,9 @@
-# Web VAPT Toolkit -- Consolidated Build
+# Web VAPT Toolkit Standalone Executable
 
-Single-file consolidation of the original modular toolkit (`main.py` +
-13 separate tool files) into one Python script that can be turned into
+Single-file consolidation of my original modular toolkit into one Python script that can be turned into
 a standalone binary with **zero internet** and **zero Python install**
-required on the target machine.
+required on the target machine. This script is meant to be used as a semi-autoamted script to help improve
+efficiency during Web-App Penetration Tests and ensure a thorough assessment of the target.
 
 ## Files
 
@@ -21,7 +21,9 @@ required on the target machine.
 flat-list style (re-paste the JWT for every option) is gone. The new
 workflow holds an active token + decoded form + session context as
 persistent state across all sub-operations. Decode is always one
-keypress (`d`) and forge ops chain naturally through a history.
+keypress (`d`) and forge ops chain naturally through a history. 
+Credits to  PortSwigger and @ticarpi for the exploitation techniques
+used in the JWT Exploitation Workflow.
 
 Menu groups inside the JWT tool:
 
