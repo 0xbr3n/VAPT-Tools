@@ -2,8 +2,9 @@
 
 > A personal collection of open-source tools built to automate, streamline, and supercharge penetration testing and vulnerability assessment workflows.
 
+[![My Website](https://img.shields.io/badge/🌐_My_Website-0xbren.com-8b5cf6?style=for-the-badge&labelColor=0d1117)](https://0xbren.com)
+
 [![Author](https://img.shields.io/badge/Author-Brendon_Teo-8b5cf6?style=for-the-badge&labelColor=0d1117)](https://github.com/brendontkl)
-[![My Website](https://img.shields.io/badge/🌐_My_Website-0xbren.com-8b5cf6?style=for-the-badge&labelColor=0d1117)](https://brendontkl.github.io)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077b5?style=for-the-badge&logo=linkedin&labelColor=0d1117)](https://www.linkedin.com/in/brendon-teo-195971152/)
 [![Tools](https://img.shields.io/badge/Tools-4-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
 [![Language](https://img.shields.io/badge/Language-Python-3776ab?style=for-the-badge&logo=python&labelColor=0d1117)](https://www.python.org/)
