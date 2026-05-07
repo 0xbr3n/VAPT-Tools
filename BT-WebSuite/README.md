@@ -17,11 +17,10 @@ efficiency during Web-App Penetration Tests and ensure a thorough assessment of 
 
 ## What changed in this revision
 
-**Tool 2 (JWT) was completely rebuilt as a unified REPL.** The old
-flat-list style (re-paste the JWT for every option) is gone. The new
-workflow holds an active token + decoded form + session context as
-persistent state across all sub-operations. Decode is always one
+**Current workflow holds an active token + decoded form + session context as
+persistent state across all sub-operations. Decoding of JWT is always one
 keypress (`d`) and forge ops chain naturally through a history. 
+
 Credits to  PortSwigger and @ticarpi for the exploitation techniques
 used in the JWT Exploitation Workflow.
 
