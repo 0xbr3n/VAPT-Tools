@@ -5,8 +5,8 @@
 [![My Website](https://img.shields.io/badge/🌐_My_Website-0xbr3n.com-8b5cf6?style=for-the-badge&labelColor=0d1117)](https://0xbr3n.com)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077b5?style=for-the-badge&logo=linkedin&labelColor=0d1117)](https://www.linkedin.com/in/brendon-teo-195971152/)
-[![Tools](https://img.shields.io/badge/Tools-4-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
-[![Language](https://img.shields.io/badge/Language-Python-3776ab?style=for-the-badge&logo=python&labelColor=0d1117)](https://www.python.org/)
+[![Tools](https://img.shields.io/badge/Tools-5-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
+[![Language](https://img.shields.io/badge/Language-Python_|_Bash-3776ab?style=for-the-badge&logo=python&labelColor=0d1117)](https://www.python.org/)
 
 ---
 
@@ -17,6 +17,7 @@
 | [BT-WebSuite](#-bt-websuite) | Web VAPT | Automated web recon, fuzzing & vulnerability discovery |
 | [CIS-NessusToExcel](#-cis-nessustoexcel) | Reporting | Converts Nessus CIS scans into client-ready Excel reports |
 | [Infra-VA (VA-Automater)](#-infra-va--va-automater) | Infra VAPT | Automates VA report processing and tracking |
+| [Infra-PingSweep](#-infra-pingsweep--pingsweep-automator) | Infra VAPT | Categorised host discovery + master-sheet LIVE/DEAD mapping |
 | [OSED-Automation](#-osed-automation) | Exploit Dev | Exploit development scaffolding and automation |
 
 ---
@@ -94,6 +95,31 @@ python3 va_automater.py
 
 ---
 
+## 📡 Infra-PingSweep / PingSweep Automator
+
+**Category:** Infrastructure VAPT | **Language:** Bash
+
+Zero-dependency host discovery for the start of every infra engagement. Takes the client's scope in whatever form it arrived — text lists, CSV exports, or the **original `.xlsx` tracker** — sweeps it with both `fping` and `nmap`, and returns live hosts grouped by device category plus a LIVE/DEAD mapping sheet for the master IP list.
+
+**Features:**
+- Accepts `.txt`, `.csv` and `.xlsx`/`.xlsm` — reads Excel offline with only `unzip`, no Python or LibreOffice
+- Extracts IPs and CIDR from any column layout; filters out subnet-mask columns, headers and hostnames
+- Dual discovery: `fping` ICMP **plus** `nmap -sn` (`-PE -PS -PA`/ARP) unioned, so ICMP-blocking hosts aren't missed
+- Live hosts output **per device category** and as one combined deduplicated list
+- **`results_all.csv`** — every scoped IP with `LIVE`/`DEAD` status and detection method, ready to `VLOOKUP` back into the client's master tracker
+- Configurable discovery ports, per-host timeout and retries; bounded scans with a live progress ticker
+- Timestamped run folders, full transcript log, optional chained `nmap -sV` service scan
+
+**Use case:** The first hour of any infrastructure VAPT. Turns a client Excel tracker into a validated live-host list, and flags every row of that tracker as live or dead in one action instead of host-by-host.
+
+```bash
+cd Infra-PingSweep
+chmod +x pingsweep.sh
+sudo ./pingsweep.sh
+```
+
+---
+
 ## 💥 OSED-Automation
 
 **Category:** Exploit Development | **Language:** Python
@@ -126,9 +152,12 @@ Python 3.8+
 pip install -r requirements.txt   # inside each tool's folder
 ```
 
+> `Infra-PingSweep` is pure Bash — no Python or pip required. It only needs
+> `fping`, `nmap` and `unzip`, all of which ship with Kali.
+
 **Clone the repo:**
 ```bash
-git clone https://github.com/brendontkl/VAPT-Tools.git
+git clone https://github.com/0xbr3n/VAPT-Tools.git
 cd VAPT-Tools
 ```
 
