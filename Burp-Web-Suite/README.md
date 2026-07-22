@@ -187,6 +187,38 @@ loads it as a Java-type extension. Payload lists live in
 
 ---
 
+## Credits & Inspiration
+
+This is an original tool, written from scratch for my own web-VAPT and bug-bounty
+workflow. It stands on the shoulders of the tools and resources that taught me
+these techniques — none of their source code is used here; the implementations
+are my own, informed by their **published, well-documented approaches**:
+
+- **[sqlmap](https://github.com/sqlmapproject/sqlmap)** — the SQLi module is a
+  self-contained reimplementation of the *detection and enumeration approach*
+  (boolean/error-based confirmation, DBMS fingerprinting, injection boundaries).
+  No sqlmap source code is copied or bundled. The module can *optionally* invoke
+  an external `sqlmap` binary if you have one installed on your PATH — it is not
+  redistributed with this project.
+- **[PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings)**,
+  **[SecLists](https://github.com/danielmiessler/SecLists)** and the
+  **[OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)**
+  — references for payloads and test methodology.
+- **[PortSwigger Web Security Academy](https://portswigger.net/web-security)** —
+  learning material behind many of the checks (the File Upload demo above is a
+  PortSwigger Academy lab).
+
+**Bundled third-party runtime** (redistributed under their own licenses):
+[Jython](https://www.jython.org/), and via Jython, BouncyCastle and ICU. These
+remain under their respective upstream licenses.
+
+## License
+
+Original code in this project is released under the **[MIT License](LICENSE)**.
+Bundled runtimes/libraries remain under their own licenses (see above).
+
+---
+
 <div align="center">
   <sub>Built by a pentester, for pentesters · Singapore 🇸🇬</sub>
 </div>
