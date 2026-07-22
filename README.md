@@ -5,7 +5,7 @@
 [![My Website](https://img.shields.io/badge/🌐_My_Website-0xbr3n.com-8b5cf6?style=for-the-badge&labelColor=0d1117)](https://0xbr3n.com)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077b5?style=for-the-badge&logo=linkedin&labelColor=0d1117)](https://www.linkedin.com/in/brendon-teo-195971152/)
-[![Tools](https://img.shields.io/badge/Tools-6-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
+[![Tools](https://img.shields.io/badge/Tools-7-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
 [![Language](https://img.shields.io/badge/Language-Python_|_Bash-3776ab?style=for-the-badge&logo=python&labelColor=0d1117)](https://www.python.org/)
 
 ---
@@ -14,16 +14,17 @@
 
 | Tool | Category | Description |
 |---|---|---|
-| [BT-WebSuite](#-bt-websuite) | Web VAPT | Automated web recon, fuzzing & vulnerability discovery |
+| [Web-Suite](#-web-suite) | Web VAPT | Automated web recon, fuzzing & vulnerability discovery |
 | [CIS-NessusToExcel](#-cis-nessustoexcel) | Reporting | Converts Nessus CIS scans into client-ready Excel reports |
 | [Infra-VA (VA-Automater)](#-infra-va--va-automater) | Infra VAPT | Automates VA report processing and tracking |
 | [Ping-Sweeper](#-ping-sweeper) | Infra VAPT | Categorised host discovery + master-sheet LIVE/DEAD mapping |
 | [SCR-Suite](#-scr-suite) | Source Code Review | Fully offline multi-tool SAST/SCA orchestration with FP triage |
+| [Wifi-Auditor](#-wifi-auditor) | Wireless VAPT | Three-stage WiFi audit: recon → capture → crack, with auto report |
 | [OSED-Automation](#-osed-automation) | Exploit Dev | Exploit development scaffolding and automation |
 
 ---
 
-## 🌐 BT-WebSuite
+## 🌐 Web-Suite
 
 **Category:** Web VAPT | **Language:** Python
 
@@ -39,7 +40,7 @@ A custom web security testing suite built for Web Application VAPT engagements. 
 **Use case:** Speeds up the recon and discovery phase of web application penetration tests, particularly useful for large-scope assessments with many subdomains or endpoints.
 
 ```bash
-cd BT-WebSuite
+cd Web-Suite
 python3 bt_websuite.py
 ```
 
@@ -143,6 +144,33 @@ A fully offline, air-gap-friendly replacement for Fortify-style automated source
 cd SCR-Suite
 powershell -ExecutionPolicy Bypass -File setup\setup_tools.ps1   # once, online
 run_scan.cmd "C:\path\to\client\source"                          # offline scan
+```
+
+---
+
+## 📶 Wifi-Auditor
+
+**Category:** Wireless VAPT | **Language:** Python + Bash
+
+A three-stage, mostly-automated WiFi auditing pipeline for authorised wireless assessments: recon on Windows, deauth/capture in a Kali VM with a USB injection adapter, and offline handshake/PMKID cracking — ending in an auto-generated client report.
+
+**Features:**
+- **Three decoupled stages** — recon → capture → crack, handing off through small JSON files, so you can capture on one machine and crack on another (e.g. a GPU rig)
+- **Automated orchestrator** (`wifi_audit.py`) — auto monitor mode + injection self-test, 2.4/5 GHz recon, and a decision engine that recommends the least-disruptive attack path per SSID
+- **Attack coverage** — WPA2-PSK (PMKID + 4-way handshake), WPS (Pixie Dust / PIN brute), WPA3 transition-downgrade detection, Enterprise evil-twin, plus WEP, open-network and DoS/PMF resilience checks
+- **Scoping guards** — lock to one SSID/BSSID; if a filter matches nothing it attacks *nothing* rather than falling back to everything
+- **Auto / aggressive modes** — unattended safe (clientless PMKID, config checks) or aggressive (deauth handshake, WPS Pixie, WEP), with disruptive modules always requiring explicit confirmation
+- **Inline cracking** — hashcat (`-m 22000`) with automatic John the Ripper fallback
+- **Client report** — self-contained HTML/PDF with severity counts, findings and remediation; recovered secrets are redacted in the report
+
+**Use case:** Wireless penetration tests where you need a repeatable, RoE-aware pipeline from network enumeration through to a hand-over-ready report. Requires a USB injection-capable adapter for the capture stage (built-in Intel cards can't inject).
+
+```bash
+# Stage 1 (Windows): recon + pick a target
+python wifi_recon.py --select
+
+# Stages 2-3 (Kali VM + USB adapter): full automated audit
+sudo python3 kali/wifi_audit.py --auto -i wlan1
 ```
 
 ---

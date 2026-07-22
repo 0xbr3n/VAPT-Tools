@@ -1,0 +1,27 @@
+# Never commit engagement output or captured material - handshakes,
+# PMKIDs and cracked passphrases are client-confidential.
+audit_run/
+captures/
+*.cap
+*.pcap
+*.pcapng
+*.hccapx
+*.22000
+*.hash
+*.potfile
+*.pot
+findings.json
+capture_manifest.json
+*.capture.json
+*.result.json
+wifi_report.html
+wifi_report.pdf
+
+# Wordlists (large, not ours to redistribute)
+*.txt.gz
+rockyou.txt
+
+# Python cruft
+__pycache__/
+*.pyc
+.venv/
