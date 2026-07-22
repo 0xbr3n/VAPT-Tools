@@ -586,11 +586,11 @@ def option3_update_tracker_status_inplace():
         only_open = yn("Only process rows where Status is 'Open'? (y/n) [default=y]: ", default="y")
         mark_closed = yn("Mark NOT-found rows as Closed? (y/n) [default=y]: ", default="y")
 
-        fill_comment = yn("Fill Deloitte comments column for CLOSED rows? (y/n) [default=y]: ", default="y")
+        fill_comment = yn("Fill reviewer comments column for CLOSED rows? (y/n) [default=y]: ", default="y")
         comment_col_name = ""
         comment_fill_text = ""
         if fill_comment:
-            comment_col_name = input("Enter comment column name (e.g., Deloitte Comments): ").strip()
+            comment_col_name = input("Enter comment column name (e.g., Reviewer Comments): ").strip()
             comment_fill_text = input("Enter text to fill for CLOSED rows: ").strip()
 
         def find_col_index_ci(header_name: str) -> int:
