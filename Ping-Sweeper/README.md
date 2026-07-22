@@ -1,4 +1,4 @@
-# PingSweep Automator
+# Ping-Sweeper
 
 > **Categorised Host Discovery & Master-Sheet Mapping for Infrastructure VAPT**
 
@@ -92,7 +92,7 @@ sudo apt install fping nmap unzip     # only if a minimal image is missing them
 
 ```bash
 git clone https://github.com/0xbr3n/VAPT-Tools.git
-cd VAPT-Tools/Infra-PingSweep
+cd VAPT-Tools/Ping-Sweeper
 chmod +x pingsweep.sh
 ```
 

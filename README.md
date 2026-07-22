@@ -17,7 +17,7 @@
 | [BT-WebSuite](#-bt-websuite) | Web VAPT | Automated web recon, fuzzing & vulnerability discovery |
 | [CIS-NessusToExcel](#-cis-nessustoexcel) | Reporting | Converts Nessus CIS scans into client-ready Excel reports |
 | [Infra-VA (VA-Automater)](#-infra-va--va-automater) | Infra VAPT | Automates VA report processing and tracking |
-| [Infra-PingSweep](#-infra-pingsweep--pingsweep-automator) | Infra VAPT | Categorised host discovery + master-sheet LIVE/DEAD mapping |
+| [Ping-Sweeper](#-ping-sweeper) | Infra VAPT | Categorised host discovery + master-sheet LIVE/DEAD mapping |
 | [OSED-Automation](#-osed-automation) | Exploit Dev | Exploit development scaffolding and automation |
 
 ---
@@ -95,7 +95,7 @@ python3 va_automater.py
 
 ---
 
-## 📡 Infra-PingSweep / PingSweep Automator
+## 📡 Ping-Sweeper
 
 **Category:** Infrastructure VAPT | **Language:** Bash
 
@@ -113,7 +113,7 @@ Zero-dependency host discovery for the start of every infra engagement. Takes th
 **Use case:** The first hour of any infrastructure VAPT. Turns a client Excel tracker into a validated live-host list, and flags every row of that tracker as live or dead in one action instead of host-by-host.
 
 ```bash
-cd Infra-PingSweep
+cd Ping-Sweeper
 chmod +x pingsweep.sh
 sudo ./pingsweep.sh
 ```
@@ -152,7 +152,7 @@ Python 3.8+
 pip install -r requirements.txt   # inside each tool's folder
 ```
 
-> `Infra-PingSweep` is pure Bash — no Python or pip required. It only needs
+> `Ping-Sweeper` is pure Bash — no Python or pip required. It only needs
 > `fping`, `nmap` and `unzip`, all of which ship with Kali.
 
 **Clone the repo:**
