@@ -1,0 +1,112 @@
+============================================================
+ SCR Automater - Installation & Usage
+============================================================
+
+WHAT THIS IS
+------------
+An offline source-code security review tool. You point it at a folder of
+source code and it runs several scanners (Semgrep/Opengrep, Bandit, Gitleaks,
+Grype, Trivy, Checkov, and optionally OWASP Dependency-Check and SonarQube),
+merges and de-duplicates the results, filters likely false positives, and
+produces a single consolidated HTML/PDF report plus CSV/JSON evidence.
+
+After the one-time setup below, every scan runs FULLY OFFLINE - no source code
+or results ever leave the machine.
+
+
+REQUIREMENTS
+------------
+  * Windows 10 or 11 (64-bit)
+  * Python 3.9 or newer
+  * ~5-6 GB free disk space (for the downloaded tools + vulnerability databases)
+  * Internet access DURING INSTALLATION ONLY
+
+
+INSTALLATION (on a machine with internet)
+-----------------------------------------
+1. Extract this zip anywhere (e.g. C:\Tools\SCR-Automater).
+
+2. Install Python 3.9+ from https://www.python.org/downloads/
+   IMPORTANT: on the first screen of the Python installer, tick
+      [x] Add python.exe to PATH
+   then finish the install.
+
+3. Double-click  INSTALL.cmd
+   This downloads all the scanning tools and vulnerability databases and builds
+   the local environment. It can take 10-30 minutes depending on your internet.
+   (You can also run it from a terminal.)
+
+   That's all - when it says "INSTALLATION COMPLETE" you are ready to scan.
+
+
+RUNNING A SCAN
+--------------
+From the SCR-Automater folder, run:
+
+    run_scan.cmd "C:\path\to\the\source\code" --pdf
+
+  * If you leave off the path, it will ask you for it.
+  * The report is written to:  reports\<foldername>_<date>\
+      - report.html   (open in any browser; filter/search findings)
+      - report.pdf    (if Microsoft Edge or Chrome is installed)
+      - findings.csv / findings.json  (raw evidence)
+      - drg_import.csv  (for the VAPT Report Generator)
+      - scan.log + raw_tool_output\  (per-tool logs = proof each tool ran)
+
+Every scan from here on works with no internet.
+
+
+WHAT THE REPORT LOOKS LIKE
+--------------------------
+Findings are CONSOLIDATED, Fortify-style:
+  * One CVE / one vulnerability type = ONE finding, not hundreds of rows.
+  * Each finding lists ALL affected files and line numbers together, with
+    2-3 example code snippets and clickable CVE / CWE reference links.
+
+
+OPTIONAL: OWASP DEPENDENCY-CHECK
+--------------------------------
+Dependency-Check is OFF by default because Grype already covers dependency
+CVEs and Dependency-Check's database download is slow. To enable it:
+
+  1. Get a free NVD API key: https://nvd.nist.gov/developers/request-an-api-key
+  2. Save the key (just the key text) in:  setup\nvd_api_key.txt
+  3. Download its database (one-time, slow):
+        powershell -ExecutionPolicy Bypass -File setup\setup_tools.ps1
+  4. In config.default.json (or your own config.json), set
+        "depcheck": { "enabled": true }
+  When enabled, its full HTML + CSV reports appear in
+        reports\...\raw_tool_output\depcheck\
+
+
+MOVING TO AN OFFLINE / AIR-GAPPED MACHINE
+-----------------------------------------
+Do the installation above on an online machine, then copy the ENTIRE
+SCR-Automater folder (including the downloaded tools\ folder) to the offline
+machine via USB. On the offline machine run once:
+
+    setup\setup_offline.cmd
+
+and then scan as normal. No internet is ever needed on the offline machine.
+
+
+TROUBLESHOOTING
+---------------
+  * "Python not found" - install Python 3.9+ and tick "Add to PATH", then
+    re-run INSTALL.cmd.
+  * A single tool failed to download - the others still install; re-run
+    INSTALL.cmd to retry just the missing pieces. Scans run with whatever
+    tools are present.
+  * No PDF produced - install Microsoft Edge or Google Chrome (used headless
+    to render the PDF); the HTML report is always produced regardless.
+  * Refresh vulnerability databases every few months by re-running
+    INSTALL.cmd (or setup\setup_tools.ps1) on an online machine.
+
+
+PRIVACY
+-------
+Scans run with an outbound-network black-hole enabled by default, so the
+scanning tools cannot phone home. Client source code and results stay on the
+machine. This package intentionally ships WITHOUT any API keys, past reports,
+or client data.
+============================================================

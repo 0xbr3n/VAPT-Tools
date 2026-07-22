@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Source Code Review Report</title>
+<style>
+  :root{--bg:#0f1420;--panel:#171e2e;--panel2:#1e2740;--text:#e7ecf5;--muted:#8b97ad;
+    --crit:#ff4d5e;--high:#ff8a3d;--med:#ffd23d;--low:#4dc3ff;--info:#9aa7bd;--ok:#3ddc84;
+    --border:#2a3550}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 "Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+  header{padding:28px 36px 18px;border-bottom:1px solid var(--border);background:var(--panel)}
+  h1{margin:0 0 4px;font-size:22px}
+  .sub{color:var(--muted);font-size:13px}
+  #toolvers{margin-top:10px;max-width:900px}
+  #toolvers summary{cursor:pointer;color:var(--low);font-size:12px}
+  #toolvers table.ctbl{margin-top:8px}
+  .cards{display:flex;gap:14px;flex-wrap:wrap;padding:20px 36px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:14px 20px;min-width:120px;text-align:center}
+  .card .n{font-size:26px;font-weight:700}
+  .card .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .c-critical .n{color:var(--crit)} .c-high .n{color:var(--high)} .c-medium .n{color:var(--med)}
+  .c-low .n{color:var(--low)} .c-info .n{color:var(--info)} .c-total .n{color:var(--ok)}
+  .bars{padding:0 36px 8px;max-width:900px}
+  .barrow{display:flex;align-items:center;gap:10px;margin:4px 0;font-size:12px}
+  .barrow .lbl{width:290px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barrow .bar{height:12px;border-radius:6px;background:linear-gradient(90deg,#4dc3ff,#8a6cff);min-width:2px}
+  .barrow .cnt{color:var(--text)}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 36px;
+    background:var(--panel);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:5}
+  select,input[type=text]{background:var(--panel2);color:var(--text);border:1px solid var(--border);
+    border-radius:6px;padding:6px 10px;font-size:13px}
+  input[type=text]{width:260px}
+  .sevbtn{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:6px;
+    padding:5px 12px;cursor:pointer;font-size:12px;font-weight:600}
+  .sevbtn.off{opacity:.32}
+  .sevbtn.critical{border-color:var(--crit)} .sevbtn.high{border-color:var(--high)}
+  .sevbtn.medium{border-color:var(--med)} .sevbtn.low{border-color:var(--low)}
+  .sevbtn.info{border-color:var(--info)}
+  label.chk{font-size:12px;color:var(--muted);display:flex;gap:5px;align-items:center;cursor:pointer}
+  #list{padding:14px 36px 60px}
+  .finding{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:10px 0;overflow:hidden}
+  .fhead{display:flex;gap:12px;align-items:center;padding:11px 16px;cursor:pointer}
+  .fhead:hover{background:var(--panel2)}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;flex-shrink:0}
+  .p-critical{background:var(--crit);color:#fff}.p-high{background:var(--high);color:#201000}
+  .p-medium{background:var(--med);color:#201a00}.p-low{background:var(--low);color:#002030}
+  .p-info{background:#39435c;color:var(--text)}
+  .ftitle{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .floc{color:var(--muted);font-size:12px;max-width:34%;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;direction:rtl;text-align:left}
+  .tag{font-size:11px;background:var(--panel2);border:1px solid var(--border);border-radius:4px;
+    padding:2px 7px;color:var(--muted);flex-shrink:0}
+  .tag.fp-high{color:var(--crit);border-color:var(--crit)}
+  .tag.conf-high{color:var(--ok);border-color:var(--ok)}
+  .fbody{display:none;border-top:1px solid var(--border);padding:14px 18px;font-size:13px}
+  .finding.open .fbody{display:block}
+  .fbody h4{margin:12px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+  .fbody p{margin:2px 0 8px;white-space:pre-wrap;word-break:break-word}
+  pre{background:#0a0e18;border:1px solid var(--border);border-radius:8px;padding:10px 12px;
+    overflow-x:auto;font:12px/1.5 Consolas,monospace;color:#cfe3ff;max-height:340px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:4px 0 8px}
+  .meta-grid div{background:var(--panel2);border-radius:6px;padding:6px 10px;font-size:12px}
+  .meta-grid b{color:var(--muted);font-weight:600;display:block;font-size:10px;text-transform:uppercase}
+  .note{color:var(--med);font-size:12px;margin:2px 0}
+  .example{margin:6px 0 10px}
+  .exhdr{font:12px Consolas,monospace;color:var(--low);margin-bottom:3px}
+  .loclist{max-height:280px;overflow:auto;background:#0a0e18;border:1px solid var(--border);
+    border-radius:8px;padding:8px 10px}
+  .locrow{font:12px/1.6 Consolas,monospace;color:#cfe3ff;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .reflist .refrow{font-size:12px;margin:2px 0;word-break:break-all}
+  .ctblwrap{max-height:420px;overflow:auto;border:1px solid var(--border);border-radius:8px}
+  table.ctbl{border-collapse:collapse;width:100%;font-size:12px;margin:4px 0 8px}
+  .ctblwrap table.ctbl{margin:0}
+  .ctblwrap th{position:sticky;top:0}
+  table.ctbl th,table.ctbl td{border:1px solid var(--border);padding:5px 8px;text-align:left;
+    font-family:Consolas,monospace;vertical-align:top}
+  table.ctbl th{background:var(--panel2);color:var(--muted);font-family:"Segoe UI",Arial,sans-serif}
+  table.ctbl td.vbad{color:var(--high);font-weight:600}
+  table.ctbl td.vfix{color:var(--ok)}
+  a{color:var(--low)}
+  .count-line{color:var(--muted);font-size:12px;padding:0 36px}
+  @media print{
+    body{background:#fff;color:#111}
+    :root{--panel:#fff;--panel2:#f3f5f9;--text:#111;--muted:#555;--border:#ccc;--bg:#fff}
+    .filters{display:none}
+    #toolvers{display:block}
+    #toolvers[open] table,#toolvers table{display:table}
+    .fbody{display:block !important}
+    .finding{page-break-inside:avoid;border:1px solid #bbb}
+    pre{color:#123;background:#f4f6fa;max-height:none;white-space:pre-wrap}
+    .loclist{max-height:none;background:#f4f6fa}
+    .locrow{color:#123;white-space:normal}
+    .exhdr{color:#036}
+    table.ctbl td.vbad{color:#b00} table.ctbl td.vfix{color:#070}
+    table.ctbl th{background:#eef1f6}
+    .ctblwrap{max-height:none;overflow:visible}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Source Code Review Report</h1>
+  <div class="sub" id="metaline"></div>
+  <details id="toolvers"><summary>Scanning tools &amp; versions</summary>
+    <table class="ctbl" id="toolverstbl"><tr><th>Tool</th><th>Version</th><th>Path</th></tr></table>
+  </details>
+</header>
+<div class="cards" id="cards"></div>
+<div class="bars" id="catbars"></div>
+<div class="filters">
+  <span id="sevbtns"></span>
+  <select id="f-cat"><option value="">All categories</option></select>
+  <select id="f-tool"><option value="">All tools</option></select>
+  <select id="f-conf">
+    <option value="">Any confidence</option>
+    <option value="high">High confidence only</option>
+    <option value="high,medium">High + Medium</option>
+  </select>
+  <input type="text" id="f-search" placeholder="Search title / file / rule / CVE...">
+  <label class="chk"><input type="checkbox" id="f-hidefp" checked> hide likely false positives</label>
+  <button class="sevbtn" onclick="expandAll(true)">Expand all</button>
+  <button class="sevbtn" onclick="expandAll(false)">Collapse all</button>
+</div>
+<div class="count-line" id="countline"></div>
+<div id="list"></div>
+<script>
+const META = __SCR_META__;
+const DATA = __SCR_DATA__;
+const SEVS = ["critical","high","medium","low","info"];
+let sevOn = {critical:true, high:true, medium:true, low:true, info:true};
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+document.getElementById("metaline").textContent =
+  `Target: ${META.target}  •  Scanned: ${META.timestamp}  •  Tools: ${META.tools_run.join(", ")}` +
+  (META.tools_skipped.length ? `  •  Skipped: ${META.tools_skipped.join(", ")}` : "") +
+  `  •  Fully offline scan`;
+
+function buildToolVersions(){
+  const tv = META.tool_versions || [];
+  const el = document.getElementById("toolvers");
+  if(!tv.length){ if(el) el.style.display="none"; return; }
+  document.getElementById("toolverstbl").innerHTML =
+    `<tr><th>Tool</th><th>Version</th><th>Path</th></tr>` +
+    tv.map(t=>`<tr><td>${esc(t.tool)}</td><td class="vfix">${esc(t.version)}</td>`+
+      `<td>${esc(t.path)}</td></tr>`).join("");
+}
+function buildCards(){
+  const counts = {critical:0,high:0,medium:0,low:0,info:0};
+  DATA.forEach(f=>counts[f.severity] = (counts[f.severity]||0)+1);
+  const totLoc = DATA.reduce((s,f)=>s+(f.location_count||1),0);
+  let h = `<div class="card c-total"><div class="n">${DATA.length}</div><div class="l">Findings (${totLoc} locations)</div></div>`;
+  SEVS.forEach(s=>h+=`<div class="card c-${s}"><div class="n">${counts[s]||0}</div><div class="l">${s}</div></div>`);
+  const hc = DATA.filter(f=>f.confidence==="high").length;
+  const fp = DATA.filter(f=>f.fp_likelihood==="high").length;
+  h += `<div class="card"><div class="n" style="color:var(--ok)">${hc}</div><div class="l">High confidence</div></div>`;
+  h += `<div class="card"><div class="n" style="color:var(--muted)">${fp}</div><div class="l">Likely FP (flagged)</div></div>`;
+  document.getElementById("cards").innerHTML = h;
+}
+function buildBars(){
+  const cats = {};
+  DATA.forEach(f=>cats[f.category]=(cats[f.category]||0)+1);
+  const entries = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const max = entries.length ? entries[0][1] : 1;
+  document.getElementById("catbars").innerHTML = entries.map(([c,n])=>
+    `<div class="barrow"><span class="lbl" title="${esc(c)}">${esc(c)}</span>` +
+    `<span class="bar" style="width:${Math.max(2, n/max*420)}px"></span><span class="cnt">${n}</span></div>`).join("");
+}
+function buildFilters(){
+  const bt = document.getElementById("sevbtns");
+  bt.innerHTML = SEVS.map(s=>`<button class="sevbtn ${s}" data-sev="${s}">${s}</button>`).join(" ");
+  bt.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    sevOn[b.dataset.sev]=!sevOn[b.dataset.sev];
+    b.classList.toggle("off",!sevOn[b.dataset.sev]); render();});
+  const cats=[...new Set(DATA.map(f=>f.category))].sort();
+  document.getElementById("f-cat").innerHTML += cats.map(c=>`<option>${esc(c)}</option>`).join("");
+  const tools=[...new Set(DATA.flatMap(f=>f.tools))].sort();
+  document.getElementById("f-tool").innerHTML += tools.map(t=>`<option>${esc(t)}</option>`).join("");
+  ["f-cat","f-tool","f-conf","f-hidefp"].forEach(id=>document.getElementById(id).onchange=render);
+  document.getElementById("f-search").oninput=render;
+}
+function findingHTML(f){
+  const conf = f.confidence==="high" ? "conf-high" : "";
+  const n = f.location_count || (f.locations?f.locations.length:1);
+  const locList = (f.locations||[]).map(l=>`<div class="locrow">${esc(l)}</div>`).join("");
+  const examples = (f.examples||[]).map(ex=>
+    `<div class="example"><div class="exhdr">${esc(ex.file)}:${ex.line}</div>`+
+    `<pre>${esc(ex.snippet)}</pre></div>`).join("");
+  const cweCell = (f.cwe_ids&&f.cwe_ids.length)
+    ? f.cwe_ids.map(c=>`<a href="https://cwe.mitre.org/data/definitions/${c}.html" target="_blank" rel="noopener">CWE-${c}</a>`).join(", ")
+    : esc(f.cwe_display||"-");
+  const refs = (f.ref_links||[]).map(r=>
+    `<div class="refrow"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label)}</a></div>`).join("");
+  const cveLink = id => id && /^CVE-/i.test(id)
+    ? `<a href="https://nvd.nist.gov/vuln/detail/${esc(id)}" target="_blank" rel="noopener">${esc(id)}</a>`
+    : esc(id||"—");
+  const comps = (f.components||[]).length ? (
+    `<h4>Outdated / vulnerable component breakdown (${f.components.length})</h4>`+
+    `<div class="ctblwrap"><table class="ctbl">`+
+    `<tr><th>Component</th><th>Version found</th><th>Fixed in</th><th>CVE</th><th>File</th></tr>`+
+    f.components.map(c=>`<tr><td>${esc(c.component)}</td><td class="vbad">${esc(c.version)}</td>`+
+      `<td class="vfix">${esc(c.fixed_version||"—")}</td><td>${cveLink(c.cve)}</td>`+
+      `<td>${esc(c.file)}</td></tr>`).join("")+
+    `</table></div>`) : "";
+  return `<div class="finding" id="${f.fid}">
+  <div class="fhead" onclick="this.parentNode.classList.toggle('open')">
+    <span class="pill p-${f.severity}">${f.severity}</span>
+    <span class="ftitle">${esc(f.title)}</span>
+    <span class="tag ${conf}">conf: ${f.confidence}</span>
+    ${f.fp_likelihood==="high"?`<span class="tag fp-high">likely FP</span>`:""}
+    ${f.tools.length>1?`<span class="tag" style="color:var(--ok)">${f.tools.length} tools</span>`:""}
+    <span class="tag" style="color:var(--low);border-color:var(--low)">${n} location${n===1?"":"s"}</span>
+  </div>
+  <div class="fbody">
+    <div class="meta-grid">
+      <div><b>Category</b>${esc(f.category)}</div>
+      <div><b>OWASP</b>${esc(f.owasp||"-")}</div>
+      <div><b>CWE</b>${cweCell}</div>
+      <div><b>Rule</b>${esc(f.rule_id||"-")}</div>
+      <div><b>Reported by</b>${esc(f.tools.join(", "))}</div>
+      <div><b>Affected locations</b>${n}</div>
+    </div>
+    <h4>Description</h4><p>${esc(f.description)}</p>
+    ${comps}
+    ${examples?`<h4>Example code (${f.examples.length} of ${n})</h4>${examples}`:""}
+    ${(f.components||[]).length?"":`<h4>Affected files (${n})</h4><div class="loclist">${locList}</div>`}
+    ${f.triage_notes.length?`<h4>Triage notes</h4>${f.triage_notes.map(x=>`<div class="note">• ${esc(x)}</div>`).join("")}`:""}
+    <h4>How to verify (rule out false positive)</h4><p>${esc(f.verification)}</p>
+    ${f.remediation?`<h4>Remediation</h4><p>${esc(f.remediation)}</p>`:""}
+    ${refs?`<h4>References (CVE / CWE)</h4><div class="reflist">${refs}</div>`:
+      (f.reference?`<h4>Reference</h4><p>${esc(f.reference)}</p>`:"")}
+  </div></div>`;
+}
+function render(){
+  const cat=document.getElementById("f-cat").value;
+  const tool=document.getElementById("f-tool").value;
+  const conf=document.getElementById("f-conf").value;
+  const q=document.getElementById("f-search").value.toLowerCase();
+  const hideFP=document.getElementById("f-hidefp").checked;
+  const rows=DATA.filter(f=>{
+    if(!sevOn[f.severity])return false;
+    if(cat&&f.category!==cat)return false;
+    if(tool&&!f.tools.includes(tool))return false;
+    if(conf&&!conf.split(",").includes(f.confidence))return false;
+    if(hideFP&&f.fp_likelihood==="high")return false;
+    if(q&&!(f.title+" "+(f.locations||[]).join(" ")+" "+f.rule_id+" "+f.description).toLowerCase().includes(q))return false;
+    return true;});
+  document.getElementById("countline").textContent=
+    `${rows.length} of ${DATA.length} findings shown`;
+  document.getElementById("list").innerHTML=rows.map(findingHTML).join("");
+}
+function expandAll(open){document.querySelectorAll(".finding").forEach(el=>el.classList.toggle("open",open));}
+buildToolVersions();buildCards();buildBars();buildFilters();render();
+if(window.matchMedia){window.matchMedia("print").addEventListener("change",e=>{if(e.matches)expandAll(true);});}
+</script>
+</body>
+</html>

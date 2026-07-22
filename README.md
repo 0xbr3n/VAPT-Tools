@@ -5,7 +5,7 @@
 [![My Website](https://img.shields.io/badge/🌐_My_Website-0xbr3n.com-8b5cf6?style=for-the-badge&labelColor=0d1117)](https://0xbr3n.com)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077b5?style=for-the-badge&logo=linkedin&labelColor=0d1117)](https://www.linkedin.com/in/brendon-teo-195971152/)
-[![Tools](https://img.shields.io/badge/Tools-5-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
+[![Tools](https://img.shields.io/badge/Tools-6-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
 [![Language](https://img.shields.io/badge/Language-Python_|_Bash-3776ab?style=for-the-badge&logo=python&labelColor=0d1117)](https://www.python.org/)
 
 ---
@@ -18,6 +18,7 @@
 | [CIS-NessusToExcel](#-cis-nessustoexcel) | Reporting | Converts Nessus CIS scans into client-ready Excel reports |
 | [Infra-VA (VA-Automater)](#-infra-va--va-automater) | Infra VAPT | Automates VA report processing and tracking |
 | [Ping-Sweeper](#-ping-sweeper) | Infra VAPT | Categorised host discovery + master-sheet LIVE/DEAD mapping |
+| [SCR-Suite](#-scr-suite) | Source Code Review | Fully offline multi-tool SAST/SCA orchestration with FP triage |
 | [OSED-Automation](#-osed-automation) | Exploit Dev | Exploit development scaffolding and automation |
 
 ---
@@ -116,6 +117,32 @@ Zero-dependency host discovery for the start of every infra engagement. Takes th
 cd Ping-Sweeper
 chmod +x pingsweep.sh
 sudo ./pingsweep.sh
+```
+
+---
+
+## 🔬 SCR-Suite
+
+**Category:** Source Code Review | **Language:** Python
+
+A fully offline, air-gap-friendly replacement for Fortify-style automated source code review. Orchestrates eight open-source SAST/SCA tools over a client codebase, normalises their output into one model, dedupes across tools, triages false positives, and produces a filterable HTML report — **without a single byte of client code leaving the machine**.
+
+**Features:**
+- **Eight tools, one command** — Opengrep/Semgrep, Bandit, Gitleaks, Grype, Trivy, Checkov, OWASP Dependency-Check and SonarQube, each invoked with the right offline flags
+- **Network black-hole** — every child process runs behind an unroutable proxy, so a scanner physically cannot phone home even if it tries
+- **Two-phase design** — all downloads happen once on an internet-connected machine, before any client code is involved
+- **Cross-tool dedupe** — findings merged on file + category within 3 lines (or matching CVE); multi-tool agreement boosts confidence
+- **False-positive triage** — scores every finding on rule type, path heuristics, placeholder secrets and noisy rule families; nothing is deleted, likely FPs are flagged and toggle-hidden
+- **Manual-check engine** — hand-run SCR greps encoded as editable regex rules in `manual_rules.json`, running with zero external tools
+- **Report-ready output** — self-contained HTML, PDF, JSON, CSV, plus a grouped `drg_import.csv` for the VAPT report generator
+- **Optional local LLM triage** — per-finding FP review via a local Ollama model, advisory-only by default, no data egress
+
+**Use case:** Source code review engagements where the client's code cannot leave their environment and a commercial SAST licence isn't available. Turns thousands of raw, duplicated tool findings into a short list of report-ready issues.
+
+```bash
+cd SCR-Suite
+powershell -ExecutionPolicy Bypass -File setup\setup_tools.ps1   # once, online
+run_scan.cmd "C:\path\to\client\source"                          # offline scan
 ```
 
 ---

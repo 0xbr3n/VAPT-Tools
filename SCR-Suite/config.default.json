@@ -1,0 +1,38 @@
+{
+  "tools_dir": "tools",
+  "reports_dir": "reports",
+  "network_blackhole": true,
+  "exclude_dirs": [
+    "node_modules", "bower_components", "vendor", "third_party",
+    ".git", ".svn", ".hg", ".idea", ".vs", ".vscode",
+    "venv", ".venv", "env", "site-packages", "__pycache__",
+    "dist", "build", "out", "bin", "obj", "target",
+    "coverage", ".nyc_output", ".pytest_cache", ".mypy_cache"
+  ],
+  "exclude_globs": ["*.min.js", "*.min.css", "*.map", "*.lock"],
+  "adapters": {
+    "semgrep":   { "enabled": true,  "path": null, "rules_dir": null, "timeout": 5400 },
+    "bandit":    { "enabled": true,  "path": null },
+    "gitleaks":  { "enabled": true,  "path": null },
+    "grype":     { "enabled": true,  "path": null, "db_dir": null, "timeout": 1800 },
+    "depcheck":  { "enabled": false, "path": null, "_note": "off by default - Grype is the primary dependency-CVE scanner (dependency-check's NVD API download is slow/unreliable). Enable only if you have a working NVD DB." },
+    "trivy":     { "enabled": true,  "path": null },
+    "checkov":   { "enabled": true,  "path": null },
+    "manual":    { "enabled": true,  "rules_file": null },
+    "sonarqube": {
+      "enabled": false,
+      "url": "http://localhost:9000",
+      "token": "",
+      "project_key": "scr-scan"
+    }
+  },
+  "llm": {
+    "backend": "poc",
+    "_backend_note": "poc = offline deterministic reasoning (no model call, no egress); onprem = internal OpenAI-compatible endpoint; disabled = off. Env LLM_BACKEND/LLM_ENDPOINT/LLM_MODEL override these.",
+    "endpoint": "",
+    "model": "internal-model",
+    "influence_ranking": false,
+    "_influence_note": "false = LLM is advisory only (annotations); true = a high-confidence LLM false-positive verdict may down-rank a finding to likely-FP.",
+    "max_model_calls": 400
+  }
+}

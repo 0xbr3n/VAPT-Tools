@@ -1,0 +1,8 @@
+# never commit secrets, downloaded tools, or scan outputs
+setup/nvd_api_key.txt
+tools/
+reports/
+.venv/
+__pycache__/
+*.pyc
+config.json
