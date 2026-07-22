@@ -5,7 +5,7 @@
 [![My Website](https://img.shields.io/badge/🌐_My_Website-0xbr3n.com-8b5cf6?style=for-the-badge&labelColor=0d1117)](https://0xbr3n.com)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077b5?style=for-the-badge&logo=linkedin&labelColor=0d1117)](https://www.linkedin.com/in/brendon-teo-195971152/)
-[![Tools](https://img.shields.io/badge/Tools-7-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
+[![Tools](https://img.shields.io/badge/Tools-8-00d4ff?style=for-the-badge&labelColor=0d1117)](#tools)
 [![Language](https://img.shields.io/badge/Language-Python_|_Bash-3776ab?style=for-the-badge&logo=python&labelColor=0d1117)](https://www.python.org/)
 
 ---
@@ -15,6 +15,7 @@
 | Tool | Category | Description |
 |---|---|---|
 | [Web-Suite](#-web-suite) | Web VAPT | Automated web recon, fuzzing & vulnerability discovery |
+| [Burp-Web-Suite](#-burp-web-suite) | Web VAPT | 32-module web testing extension for Burp Suite Professional |
 | [CIS-NessusToExcel](#-cis-nessustoexcel) | Reporting | Converts Nessus CIS scans into client-ready Excel reports |
 | [Infra-VA (VA-Automater)](#-infra-va--va-automater) | Infra VAPT | Automates VA report processing and tracking |
 | [Ping-Sweeper](#-ping-sweeper) | Infra VAPT | Categorised host discovery + master-sheet LIVE/DEAD mapping |
@@ -42,6 +43,26 @@ A custom web security testing suite built for Web Application VAPT engagements. 
 ```bash
 cd Web-Suite
 python3 bt_websuite.py
+```
+
+---
+
+## 🧩 Burp-Web-Suite
+
+**Category:** Web VAPT | **Language:** Python (Jython) + Java
+
+The Burp Suite Professional counterpart to Web-Suite — the same web-app testing toolkit delivered as a single loadable Burp extension. Adds a **Web-Suite** tab with **32 modules** covering the web attack surface, all driving requests through Burp's own HTTP stack into a consolidated findings view.
+
+**Features:**
+- **32 module tabs** — XSS, SQLi, NoSQLi, SSTI, CMDi, CRLF, Path Traversal, XXE, SSRF, IDOR, CSRF, request smuggling, deserialization, file upload, 403 bypass, JWT (decode/forge/brute), OAuth/OIDC, GraphQL, CORS, host-header, clickjacking, open-redirect, SSL scan, JS scraper, subdomain takeover, API/Postman import, sessions and more
+- **Consolidated Findings view** — every module feeds one severity-ranked, evidence-backed results tab for reporting
+- **Packaged as a `.bapp`** — bundles its own Jython runtime, so it loads on any Burp 2020+ (Community/Pro/Enterprise) with no Python install and no internet
+- **Zero-build install** — load the prebuilt `web-suite.bapp` directly, or rebuild from source with the included scripts
+
+**Use case:** Web application penetration tests run inside Burp Suite Pro, where you want a broad, one-click battery of active checks alongside Repeater/Intruder without leaving the tool.
+
+```
+Burp → Extensions → Add → Extension type: Java → select web-suite.bapp
 ```
 
 ---
