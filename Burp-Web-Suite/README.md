@@ -94,63 +94,57 @@ IP addresses and email addresses.
 
 ## Modules
 
-All 32 tabs, grouped by what they test. Each links to its screenshot.
+All 32 tabs, grouped by what they test.
 
 ### Config, headers & client-side
-| Tab | What it checks | |
-|-----|----------------|---|
-| **Headers** | Missing/weak security headers (CSP, HSTS, X-Frame-Options…) | [img](screenshots/headers.png) |
-| **CORS** | Cross-origin resource-sharing misconfigurations | [img](screenshots/cors.png) |
-| **Host Header** | Host-header injection / password-reset poisoning | [img](screenshots/host-header.png) |
-| **Methods** | HTTP verb tampering & method-based access bypass | [img](screenshots/methods.png) |
-| **Clickjacking** | Framing protections + PoC generation | [img](screenshots/clickjacking.png) |
-| **Redirect** | Open-redirect discovery | [img](screenshots/redirect.png) |
-| **Sessions** | Session/cookie flags, fixation, predictability | [img](screenshots/sessions.png) |
+| Tab | What it checks |
+|-----|----------------|
+| **Headers** | Missing/weak security headers (CSP, HSTS, X-Frame-Options…) |
+| **CORS** | Cross-origin resource-sharing misconfigurations |
+| **Host Header** | Host-header injection / password-reset poisoning |
+| **Methods** | HTTP verb tampering & method-based access bypass |
+| **Clickjacking** | Framing protections + PoC generation |
+| **Redirect** | Open-redirect discovery |
+| **Sessions** | Session/cookie flags, fixation, predictability |
 
 ### Injection
-| Tab | What it checks | |
-|-----|----------------|---|
-| **XSS** | Reflected & DOM cross-site scripting | [img](screenshots/xss.png) |
-| **SQLi** | SQL injection | [img](screenshots/sqli.png) |
-| **NoSQLi** | NoSQL injection | [img](screenshots/nosqli.png) |
-| **SSTI** | Server-side template injection | [img](screenshots/ssti.png) |
-| **CMDi** | OS command injection | [img](screenshots/cmdi.png) |
-| **CRLF** | CRLF / header injection | [img](screenshots/crlf.png) |
-| **Path Trav.** | Directory traversal / LFI | [img](screenshots/path-traversal.png) |
-| **XXE** | XML external entity injection | [img](screenshots/xxe.png) |
+| Tab | What it checks |
+|-----|----------------|
+| **XSS** | Reflected & DOM cross-site scripting |
+| **SQLi** | SQL injection |
+| **NoSQLi** | NoSQL injection |
+| **SSTI** | Server-side template injection |
+| **CMDi** | OS command injection |
+| **CRLF** | CRLF / header injection |
+| **Path Trav.** | Directory traversal / LFI |
+| **XXE** | XML external entity injection |
 
 ### Server-side & logic
-| Tab | What it checks | |
-|-----|----------------|---|
-| **SSRF** | Server-side request forgery (with OOB callback) | [img](screenshots/ssrf.png) |
-| **IDOR** | Insecure direct object references | [img](screenshots/idor.png) |
-| **CSRF** | Anti-CSRF token analysis + PoC | [img](screenshots/csrf.png) |
-| **Smuggling** | HTTP request smuggling (CL.TE / TE.CL) | [img](screenshots/smuggling.png) |
-| **Deserial.** | Insecure deserialization | [img](screenshots/deserialization.png) |
-| **File Upload** | Unrestricted / malicious file upload | [img](screenshots/file-upload.png) |
-| **403 Bypass** | Access-control / forbidden-path bypass | [img](screenshots/403-bypass.png) |
+| Tab | What it checks |
+|-----|----------------|
+| **SSRF** | Server-side request forgery (with OOB callback) |
+| **IDOR** | Insecure direct object references |
+| **CSRF** | Anti-CSRF token analysis + PoC |
+| **Smuggling** | HTTP request smuggling (CL.TE / TE.CL) |
+| **Deserial.** | Insecure deserialization |
+| **File Upload** | Unrestricted / malicious file upload |
+| **403 Bypass** | Access-control / forbidden-path bypass |
 
 ### Auth & tokens
-| Tab | What it checks | |
-|-----|----------------|---|
-| **JWT** | Full JWT workshop: decode, risk flags, JWKS probe, and forge (alg=none, RS→HS confusion, KID/JKU injection, embedded JWK, claim tamper, HS brute-force, modulus recovery) | [img](screenshots/jwt.png) |
-| **OAuth/OIDC** | OAuth / OpenID Connect flow analysis | [img](screenshots/oauth-oidc.png) |
+| Tab | What it checks |
+|-----|----------------|
+| **JWT** | Full JWT workshop: decode, risk flags, JWKS probe, and forge (alg=none, RS→HS confusion, KID/JKU injection, embedded JWK, claim tamper, HS brute-force, modulus recovery) |
+| **OAuth/OIDC** | OAuth / OpenID Connect flow analysis |
 
 ### API, recon & misc
-| Tab | What it checks | |
-|-----|----------------|---|
-| **GraphQL** | Introspection & query abuse | [img](screenshots/graphql.png) |
-| **API/Postman** | Postman/OpenAPI collection import & testing | [img](screenshots/api-postman.png) |
-| **JS Scraper** | Endpoint & secret mining from JavaScript | [img](screenshots/js-scraper.png) |
-| **SSL Scan** | TLS/certificate configuration analysis | [img](screenshots/ssl-scan.png) |
-| **Sub Takeover** | Subdomain-takeover (dangling DNS) detection | [img](screenshots/sub-takeover.png) |
-| **EICAR / AV** | Anti-malware / upload-filter testing | [img](screenshots/eicar-av.png) |
-
-> **Headers**, **SQLi**, **File Upload** and **JS Scraper** (plus the loading
-> and overview shots) have real captures — see the [In action](#in-action)
-> section. The remaining module screenshots are placeholders; see
-> [`screenshots/README.md`](screenshots/README.md) for the filename each maps to,
-> and drop a real PNG in with the matching name to have it render automatically.
+| Tab | What it checks |
+|-----|----------------|
+| **GraphQL** | Introspection & query abuse |
+| **API/Postman** | Postman/OpenAPI collection import & testing |
+| **JS Scraper** | Endpoint & secret mining from JavaScript |
+| **SSL Scan** | TLS/certificate configuration analysis |
+| **Sub Takeover** | Subdomain-takeover (dangling DNS) detection |
+| **EICAR / AV** | Anti-malware / upload-filter testing |
 
 ---
 
