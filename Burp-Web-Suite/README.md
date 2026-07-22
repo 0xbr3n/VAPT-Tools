@@ -62,7 +62,7 @@ for reporting.
 A few modules mid-engagement — from a quick check to a confirmed remote code
 execution.
 
-**File Upload → RCE.** The File Upload module walks 11 upload-bypass techniques;
+**File Upload → RCE.** The File Upload module walks 18 upload-bypass techniques;
 here a path-traversal filename (`..%2f`) slips a PHP web shell past the filter,
 and the built-in command runner confirms code execution — `cat /home/carlos/secret`
 returns as `uid=12002(carlos)`. **RCE confirmed.**
