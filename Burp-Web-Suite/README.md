@@ -33,7 +33,10 @@ You can load the prebuilt binary directly — no build step needed:
 3. Select **`web-suite.bapp`** (or `web-suite.jar` — they are identical)
 4. A new **Web-Suite** tab appears in Burp.
 
-![Loading web-suite.bapp in Burp](screenshots/loading.png)
+The loader bootstraps the bundled Jython runtime, executes all module parts, and
+reports **`Web-Suite v3.0.0 loaded successfully`**:
+
+![The Burp extension loader output showing Web-Suite v3.0.0 loaded successfully](screenshots/loading.png)
 
 > `web-suite.bapp` and `web-suite.jar` are byte-for-byte the same file — a
 > `.bapp` is simply the extension format Burp's BApp Store uses. Either loads
@@ -52,8 +55,40 @@ module and in the consolidated **Findings** tab. **All Scans** shows everything
 in flight; **Findings** aggregates confirmed issues with severity and evidence
 for reporting.
 
-![All Scans dashboard](screenshots/all-scans.png)
-![Consolidated Findings](screenshots/findings.png)
+---
+
+## In action
+
+A few modules mid-engagement — from a quick check to a confirmed remote code
+execution.
+
+**File Upload → RCE.** The File Upload module walks 11 upload-bypass techniques;
+here a path-traversal filename (`..%2f`) slips a PHP web shell past the filter,
+and the built-in command runner confirms code execution — `cat /home/carlos/secret`
+returns as `uid=12002(carlos)`. **RCE confirmed.**
+
+![File Upload module confirming remote code execution via a path-traversal upload bypass](screenshots/file-upload.png)
+
+**SQL Injection with a built-in engine.** No external `sqlmap` binary — the SQLi
+module runs a self-contained, WAF-aware engine that first balances the query,
+confirms boolean- and error-based injection, fingerprints the DBMS (MySQL 5.6.51),
+and enumerates databases and tables inline.
+
+![SQL Injection module fingerprinting the database and enumerating tables](screenshots/sqli.png)
+
+**Security-header audit.** One pass flags every missing or misconfigured security
+header — CSP, HSTS, X-Frame-Options, Referrer-Policy, COOP/COEP/CORP,
+Permissions-Policy — plus information-disclosure headers, with the concrete risk
+spelled out per finding.
+
+![Headers module listing nine missing or misconfigured security headers](screenshots/headers.png)
+
+**JavaScript recon.** The JS Scraper crawls the app, mines every JavaScript file
+and inline script (120 pages, 68 JS files, 445 inline scripts here) and surfaces
+leaked secrets and attack surface — a hardcoded Google/GCP API key, subdomains,
+IP addresses and email addresses.
+
+![JS Scraper surfacing a leaked API key, subdomains, IPs and emails from JavaScript](screenshots/js-scraper.png)
 
 ---
 
@@ -111,10 +146,11 @@ All 32 tabs, grouped by what they test. Each links to its screenshot.
 | **Sub Takeover** | Subdomain-takeover (dangling DNS) detection | [img](screenshots/sub-takeover.png) |
 | **EICAR / AV** | Anti-malware / upload-filter testing | [img](screenshots/eicar-av.png) |
 
-> **Screenshots are placeholders** pending real captures — see
-> [`screenshots/README.md`](screenshots/README.md) for the exact filename each
-> module maps to. Drop a real PNG in with the matching name and it renders here
-> automatically.
+> **Headers**, **SQLi**, **File Upload** and **JS Scraper** (plus the loading
+> and overview shots) have real captures — see the [In action](#in-action)
+> section. The remaining module screenshots are placeholders; see
+> [`screenshots/README.md`](screenshots/README.md) for the filename each maps to,
+> and drop a real PNG in with the matching name to have it render automatically.
 
 ---
 
